@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
-//#include <x86intrin.h>
+
+// This file is for running a silent store test on RISCV cores like Rocket Core and BOOM
 
 #define ARR_SIZE 512
 
@@ -18,7 +19,7 @@ void flush_cache(void *p, unsigned int allocation) {
     }
 }
 
-unsigned long rdtsc() {
+unsigned long rdcycle() {
     unsigned long lo = 0;
     asm volatile("rdcycle %0"
                 : "=r"(lo));
@@ -39,28 +40,25 @@ unsigned long silent_store_test() {
     }
     
     // Ensure prior initialization is complete after this fence instruction
-    //_mm_mfence();
     asm volatile("fence");
    
     // Flush all caches
     //flush_cache(load_target, ARR_SIZE * sizeof(uint16_t));
 
     // Fence right before timing
-    //_mm_mfence();
     asm volatile("fence");
     
     // Perform many writes to this variable
     volatile uint16_t tmp;
-    unsigned long start = rdtsc();
+    unsigned long start = rdcycle();
     for (uint16_t *buf = load_target; buf < end; buf++) {
         tmp = *buf;
     }
     
     // Ensure all store operations have completed
-    //_mm_mfence();
     asm volatile("fence");
 
-    return rdtsc() - start;
+    return rdcycle() - start;
 }
 
 unsigned long non_silent_store_test() {
@@ -75,28 +73,25 @@ unsigned long non_silent_store_test() {
     }
     
     // Ensure prior initialization is complete after this fence instruction
-    //_mm_mfence();
     asm volatile("fence");
     
     // Flush all caches
     //flush_cache(load_target, ARR_SIZE * sizeof(uint16_t));
 
     // Fence right before timing
-    //_mm_mfence();
     asm volatile("fence");
 
     // Perform many writes to this variable
     volatile uint16_t tmp;
-    unsigned long start = rdtsc();
+    unsigned long start = rdcycle();
     for (uint16_t *buf = load_target; buf < end; buf++) {
         tmp = *buf;
     }
     
     // Ensure all store operations have completed
-    //_mm_mfence();
     asm volatile("fence");
 
-    return rdtsc() - start;
+    return rdcycle() - start;
 }
 
 // Runs silent_store experiment for num_cases amount

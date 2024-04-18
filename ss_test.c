@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdint.h>
-//#include <x86intrin.h>
+#include <x86intrin.h>
+
+// This file is for running silent store tests on x86 machines
 
 #define ARR_SIZE 512
 
@@ -10,11 +12,7 @@ void flush_cache(void *p, unsigned int allocation) {
     unsigned long i = 0;
 
     for (i = 0; i < allocation; i += cache_line) {
-        //_mm_clflush(&cp[i]);
-        asm volatile("clflush (%0)\n\t"
-                    :
-                    : "r"(&cp[i])
-                    : "memory");
+        _mm_clflush(&cp[i]);
     }
 }
 
@@ -41,15 +39,13 @@ unsigned long silent_store_test() {
     }
     
     // Ensure prior initialization is complete after this fence instruction
-    //_mm_mfence();
-    asm volatile("mfence");
+    _mm_mfence();
     
     // Flush all caches
     flush_cache(load_target, ARR_SIZE * sizeof(uint16_t));
 
     // Fence right before timing
-    //_mm_mfence();
-    asm volatile("mfence");
+    _mm_mfence();
     
     // Perform many writes to this variable
     volatile uint16_t tmp;
@@ -59,8 +55,7 @@ unsigned long silent_store_test() {
     }
     
     // Ensure all store operations have completed
-    //_mm_mfence();
-    asm volatile("mfence");
+    _mm_mfence();
 
     return rdtsc() - start;
 }
@@ -77,15 +72,13 @@ unsigned long non_silent_store_test() {
     }
     
     // Ensure prior initialization is complete after this fence instruction
-    //_mm_mfence();
-    asm volatile("mfence");
+    _mm_mfence();
     
     // Flush all caches
     flush_cache(load_target, ARR_SIZE * sizeof(uint16_t));
 
     // Fence right before timing
-    //_mm_mfence();
-    asm volatile("mfence");
+    _mm_mfence();
 
     // Perform many writes to this variable
     volatile uint16_t tmp;
@@ -95,8 +88,7 @@ unsigned long non_silent_store_test() {
     }
     
     // Ensure all store operations have completed
-    //_mm_mfence();
-    asm volatile("mfence");
+    _mm_mfence();
 
     return rdtsc() - start;
 }
