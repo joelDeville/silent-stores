@@ -19,6 +19,11 @@ unsigned long silent_store_test() {
     uint16_t *end = load_target + ARR_SIZE;
     
     // Create array and initialize all to zero
+    uint8_t zero = 0;
+    uint16_t val;
+    asm volatile("movzbw %1, %0\n\t"
+                : "=r" (val)
+                : "r" (zero));
     for (uint16_t *buf = load_target; buf < end; buf++) {
         *buf = 0;
     }
