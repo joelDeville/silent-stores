@@ -14,7 +14,7 @@ void flush_cache(void *p, unsigned int allocation) {
     }
 }
 
-void silent_store_test() {
+unsigned long silent_store_test() {
     uint16_t load_target[ARR_SIZE];
     uint16_t *end = load_target + ARR_SIZE;
     
@@ -39,15 +39,18 @@ void silent_store_test() {
     
     // Perform many writes to this variable
     volatile uint16_t tmp;
+    unsigned long start = _rdtsc();
     for (uint16_t *buf = load_target; buf < end; buf++) {
         tmp = *buf;
     }
     
     // Ensure all store operations have completed
     _mm_mfence();
+
+    return _rdtsc() - start;
 }
 
-void non_silent_store_test() {
+unsigned long non_silent_store_test() {
     uint32_t val = 0;
     uint16_t load_target[ARR_SIZE];
     uint16_t *end = load_target + ARR_SIZE;
@@ -69,12 +72,15 @@ void non_silent_store_test() {
 
     // Perform many writes to this variable
     volatile uint16_t tmp;
+    unsigned long start = _rdtsc();
     for (uint16_t *buf = load_target; buf < end; buf++) {
         tmp = *buf;
     }
     
     // Ensure all store operations have completed
     _mm_mfence();
+
+    return _rdtsc() - start;
 }
 
 // Runs silent_store experiment for num_cases amount
@@ -85,13 +91,12 @@ unsigned long run_silent_experiment(unsigned int warmup, unsigned int cases) {
     }
 
     // Now warmed up, do actual test
-    unsigned long start = _rdtsc();
+    unsigned long cycles = 0;
     for (int i = 0; i < cases; i++) {
-        silent_store_test();
+        cycles += silent_store_test();
     }
-    unsigned long stop = _rdtsc();
 
-    return (stop - start) / cases;
+    return cycles / cases;
 }
 
 unsigned long run_non_silent_experiment(unsigned int warmup, unsigned int cases) {
@@ -101,18 +106,17 @@ unsigned long run_non_silent_experiment(unsigned int warmup, unsigned int cases)
     }
 
     // Now warmed up, do actual test
-    unsigned long start = _rdtsc();
+    unsigned long cycles = 0;
     for (int i = 0; i < cases; i++) {
-        non_silent_store_test();
+        cycles += non_silent_store_test();
     }
-    unsigned long stop = _rdtsc();
 
-    return (stop - start) / cases;
+    return cycles / cases;
 }
 
 int main() {
-    unsigned long silent_cycles = run_silent_experiment(100, 100000);
-    unsigned long non_silent_cycles = run_non_silent_experiment(100, 100000);
+    unsigned long silent_cycles = run_silent_experiment(100, 1000);
+    unsigned long non_silent_cycles = run_non_silent_experiment(100, 1000);
 
     printf("Average silent store cycles: %ld\n", silent_cycles);
     printf("Average non-silent store cycles: %ld\n", non_silent_cycles);
