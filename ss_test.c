@@ -14,7 +14,7 @@ void flush_cache(void *p, unsigned int allocation) {
     }
 }
 
-unsigned long silent_store_test() {
+void silent_store_test() {
     uint16_t load_target[ARR_SIZE];
     uint16_t *end = load_target + ARR_SIZE;
     
@@ -25,7 +25,7 @@ unsigned long silent_store_test() {
                 : "=r" (val)
                 : "r" (zero));
     for (uint16_t *buf = load_target; buf < end; buf++) {
-        *buf = 0;
+        *buf = val;
     }
     
     // Ensure prior initialization is complete after this fence instruction
@@ -36,9 +36,6 @@ unsigned long silent_store_test() {
 
     // Fence right before timing
     _mm_mfence();
-
-    // Start timing operation
-    unsigned long long start = _rdtsc();
     
     // Perform many writes to this variable
     volatile uint16_t tmp;
@@ -48,15 +45,9 @@ unsigned long silent_store_test() {
     
     // Ensure all store operations have completed
     _mm_mfence();
-    
-    // Stop timing
-    unsigned long long stop = _rdtsc();
-
-    //printf("Silent test took %d\n", stop - start);
-    return stop - start;
 }
 
-unsigned long non_silent_store_test() {
+void non_silent_store_test() {
     uint32_t val = 0;
     uint16_t load_target[ARR_SIZE];
     uint16_t *end = load_target + ARR_SIZE;
@@ -76,9 +67,6 @@ unsigned long non_silent_store_test() {
     // Fence right before timing
     _mm_mfence();
 
-    // Start timing operation
-    unsigned long long start = _rdtsc();
-    
     // Perform many writes to this variable
     volatile uint16_t tmp;
     for (uint16_t *buf = load_target; buf < end; buf++) {
@@ -87,28 +75,46 @@ unsigned long non_silent_store_test() {
     
     // Ensure all store operations have completed
     _mm_mfence();
-    
-    // Stop timing
-    unsigned long long stop = _rdtsc();
+}
 
-    //printf("Non-silent test took %d\n", stop - start);
-    return stop - start;
+// Runs silent_store experiment for num_cases amount
+unsigned long run_silent_experiment(unsigned int warmup, unsigned int cases) {
+    // Starting warm-up phase for benchmark
+    for (int i = 0; i < warmup; i++) {
+        silent_store_test();
+    }
+
+    // Now warmed up, do actual test
+    unsigned long start = _rdtsc();
+    for (int i = 0; i < cases; i++) {
+        silent_store_test();
+    }
+    unsigned long stop = _rdtsc();
+
+    return (stop - start) / cases;
+}
+
+unsigned long run_non_silent_experiment(unsigned int warmup, unsigned int cases) {
+    // Starting warm-up phase for benchmark
+    for (int i = 0; i < warmup; i++) {
+        non_silent_store_test();
+    }
+
+    // Now warmed up, do actual test
+    unsigned long start = _rdtsc();
+    for (int i = 0; i < cases; i++) {
+        non_silent_store_test();
+    }
+    unsigned long stop = _rdtsc();
+
+    return (stop - start) / cases;
 }
 
 int main() {
-    int num_cases = 10;
-    long total_cycles = 0;
+    unsigned long silent_cycles = run_silent_experiment(100, 100000);
+    unsigned long non_silent_cycles = run_non_silent_experiment(100, 100000);
 
-    for (int i = 0; i < num_cases; i++) {
-        total_cycles += silent_store_test();
-    }
-
-    printf("Finished silent tests\nTook average of %ld cycles\n", total_cycles / num_cases);
-    total_cycles = 0;
-
-    for (int i = 0; i < num_cases; i++) {
-        total_cycles += non_silent_store_test();
-    }
-
-    printf("Finished non-silent tests\nTook average %ld cycles\n", total_cycles / num_cases);
+    printf("Average silent store cycles: %ld\n", silent_cycles);
+    printf("Average non-silent store cycles: %ld\n", non_silent_cycles);
+    return 0;
 }
