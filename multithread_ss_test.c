@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <stdatomic.h>
 #include <x86intrin.h>
 
 // This file is for running silent store tests on x86 machines
+// Specifically uses hyperthreading amplification to have one child constantly reading memory address being written to in tests
 // Functions are marked as noinline to force the compiler to not optimize code
 
 #define ARR_SIZE 512
@@ -86,6 +88,10 @@ unsigned long long __attribute__ ((noinline)) run_experiment(unsigned int warmup
 
 int main() {
     tmp = malloc(sizeof(uint16_t));
+    // Create thread running constantly to be checking tmp
+    // Synchronize around access to tmp, use atomic load operation to get data
+    // atomic_load(tmp); use this code for doing atomic reads of tmp for the child thread
+    
     unsigned long silent_cycles = run_experiment(100, 1000, 1);
     unsigned long non_silent_cycles = run_experiment(100, 1000, 0);
 
