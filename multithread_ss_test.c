@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdatomic.h>
+#include <pthread.h>
 #include <x86intrin.h>
 
 // This file is for running silent store tests on x86 machines
@@ -9,6 +10,23 @@
 
 #define ARR_SIZE 512
 uint16_t* tmp;
+pthread_mutex_t lock;
+
+void __attribute__ ((noinline)) read_data(void *data) {
+    // read the
+    pthread_mutex_lock(&lock);
+    uint16_t prior = *((uint16_t *) data);
+    pthread_mutex_unlock(&lock);
+    while (1) {
+        pthread_mutex_lock(&lock);
+        uint16_t new_data = atomic_load(tmp);
+        pthread_mutex_unlock(&lock);
+
+        if (prior != new_data) {
+            printf("Changed!\n");
+        }
+    }
+}
 
 // Flushes cache lines
 void __attribute__ ((noinline)) flush_cache(void *p, unsigned int allocation) {
@@ -61,7 +79,9 @@ unsigned long long __attribute__ ((noinline)) run_test(int silent_store) {
     // Perform many writes to this variable
     unsigned long long start = rdtsc();
     for (uint16_t *buf = load_target; buf < end; buf++) {
+        pthread_mutex_lock(&lock);
         *tmp = *buf;
+        pthread_mutex_lqock(&lock);
     }
     
     // Ensure all store operations have completed
@@ -88,9 +108,9 @@ unsigned long long __attribute__ ((noinline)) run_experiment(unsigned int warmup
 
 int main() {
     tmp = malloc(sizeof(uint16_t));
+    pthread_mutex_init(&lock, NULL);
     // Create thread running constantly to be checking tmp
     // Synchronize around access to tmp, use atomic load operation to get data
-    // atomic_load(tmp); use this code for doing atomic reads of tmp for the child thread
     
     unsigned long silent_cycles = run_experiment(100, 1000, 1);
     unsigned long non_silent_cycles = run_experiment(100, 1000, 0);
