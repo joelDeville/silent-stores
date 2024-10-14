@@ -1,0 +1,11 @@
+To set up gem5 simulator:
+    1. go to gem5 website (and make sure to clone pandora repo)
+    2. run relevant instruction according to OS
+    3. follow instructions (such as scons) to build then subsequently run gem5 build
+    4. make sure to use 'sudo' when building gem5
+    5. download and run 'configure' on libsodium (stable release)
+    6. modify run & build_gem5 scripts to be executable
+    7. go into workloads directory for silent store and modify makefile to point to correct location for built gem5 and libsodium
+        7a. look in simulator/util for m5 directories and whatnot for makefile
+        7b. link libsodium-stable version via relative path for makefile
+    8. continue instructions on running simulator on custom tests

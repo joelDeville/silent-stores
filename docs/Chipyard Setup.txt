@@ -1,0 +1,11 @@
+To set up Chipyard (for BOOM and Rocket):
+    1. install conda
+    2. go to chipyard website and follow instructions
+        2a. make sure to install libmamba-solver and conda-lock
+    3. clone chipyard and check out HEAD (or latest, stable release)
+        3a. Use 1.11.0 release for stable version
+    3. install libmamba (using conda)
+    4. run build command (with relevant skipping instructions to skip any FireMarshal configurations)
+        4a. skip marshal and conda initialization (--skip-marshal, --skip-conda)
+    5. after finishing build (and in general), always run 'source env.sh' before using 'make' for anything
+    6. continue instructions for running binary for BOOM/Rocket on custom tests
