@@ -26,3 +26,16 @@ Reset cpu frequency on CPU 2 by copying policy from cpu 0
 - POLICYINFO=($(cpufreq-info -c 0 -p)) && \
 - sudo cpufreq-set -c 2 -g ${POLICYINFO[2]} && \
 - sudo cpufreq-set -c 2 --min ${POLICYINFO[0]}MHz --max ${POLICYINFO[1]}MHz
+
+Make sure to check if machine allows for hyperthreading and to try to locate hyperthreaded cores
+- likely they will be sibling cores
+- join threads to those cores
+In general, remember cache states to notice effects on timing differences (exclusivity & shared states)
+Use atomic variable types to ensure reading/writing is atomic always in a test
+Never print within a test as it uses many subsystems. Instead, place something into memory and check it after test has ran.
+- For instance, using int[] to add elements into and analyze elements after test has finished
+
+For maximum information gathering, run this test on as many machines as possible (Intel, Arm, M1, etc)
+
+TODO: next steps: cache line flushes potentially during test
+flush store buffers (somehow) so cache coherency kicks in to affect timing differences

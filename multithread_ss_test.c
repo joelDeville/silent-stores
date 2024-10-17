@@ -8,6 +8,8 @@
 // Specifically uses hyperthreading amplification to have one child constantly reading memory address being written to in tests
 // Functions are marked as noinline to force the compiler to not optimize code
 
+// Note: this test is deprecated, as the newest version will be the silent_detect.c test
+
 #define ARR_SIZE 512
 uint16_t* tmp;
 pthread_mutex_t lock;
