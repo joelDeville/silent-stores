@@ -1,3 +1,4 @@
+#define _GNU_SOURCE 
 #include <stdatomic.h>  // useful for having atomic variables
 #include <stdint.h>
 #include <stdlib.h>
@@ -45,7 +46,10 @@ unsigned long long __attribute__ ((noinline)) rdtsc() {
 
 unsigned long long run_test() {
     unsigned long long start = rdtsc();
-
+    int val_to_write = 4;
+    for (uint16_t i = 0; i < 1000; i++) {
+        *tmp = val_to_write;
+    }
     return rdtsc() - start;
 }
 

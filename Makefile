@@ -5,7 +5,7 @@ build-multi-test:
 	gcc -o multi-ss -msse2 multithread_ss_test.c
 
 build-ntest:
-	gcc -o new_test silent_detect.c
+	gcc -pthread -o new_test silent_detect.c
 
 clean:
 	rm -f ss
