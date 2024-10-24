@@ -3,6 +3,7 @@ This project contains the test program and other content for my final project in
 To compile the test, use 'gcc -o ss -msse2 ss_test.c', as this will let the compiler know what specific target to compile for.
 
 For accurate benchmarking results, follow below details.
+Note: for anything involving CPUs (such as CPU 2 in the examples below), change it to be x-y where x-y is the range of CPUs you wish to shield
 
 Disable hyperthreading:
 - sudo bash -c "echo off > /sys/devices/system/cpu/smt/control"
@@ -20,8 +21,10 @@ set cpu shield on CPU 2
 Details below are to re-enable the features disabled above.
 You are in a subshell now, run your benchmark here
 Ctrl+D to close the current subshell
+
 Enable hyperthreading
 - sudo bash -c "echo on > /sys/devices/system/cpu/smt/control"
+
 Reset cpu frequency on CPU 2 by copying policy from cpu 0
 - POLICYINFO=($(cpufreq-info -c 0 -p)) && \
 - sudo cpufreq-set -c 2 -g ${POLICYINFO[2]} && \

@@ -44,7 +44,7 @@ unsigned long long __attribute__ ((noinline)) rdtsc() {
     return a | (b << 32);
 }
 
-unsigned long long run_test() {
+unsigned long long __attribute__ ((noinline)) run_test() {
     unsigned long long start = rdtsc();
     int val_to_write = 4;
     for (uint16_t i = 0; i < 1000; i++) {
@@ -64,7 +64,7 @@ unsigned long long __attribute__ ((noinline)) run_experiment(unsigned int warmup
     int thread_cpu = 1; // Change this to other thread shielded before running program
     CPU_ZERO(&cpu_set);
     CPU_SET(thread_cpu, &cpu_set);
-    pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpu_set);
+    pthread_attr_setaffinity_np(&attr, sizeof(cpu_set), &cpu_set);
     if (reading) {
         pthread_create(&tid, &attr, read_var, NULL);
     } else {
@@ -92,6 +92,8 @@ int main() {
     int cpu_desired = 0; // Change this to either CPU that is shielded before running this program
     CPU_ZERO(&cst);
     CPU_SET(cpu_desired, &cst);
+    pthread_setaffinity_np(pthread_self(), sizeof(cst), &cst);
+    pthread_getaffinity_np(pthread_self(), sizeof(cst), &cst);
 
     printf("Read cycles taken: %lld\n", run_experiment(100, 1000, 1));
     printf("Write cycles taken: %lld\n", run_experiment(100, 1000, 0));
