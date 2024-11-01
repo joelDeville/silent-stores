@@ -3,10 +3,10 @@ This project contains the test program and other content for my final project in
 To compile the test, use 'gcc -o ss -msse2 ss_test.c', as this will let the compiler know what specific target to compile for.
 
 For accurate benchmarking results, follow below details.
-Note: for anything involving CPUs (such as CPU 2 in the examples below), change it to be x-y where x-y is the range of CPUs you wish to shield
 
 Disable hyperthreading:
 - sudo bash -c "echo off > /sys/devices/system/cpu/smt/control"
+- do 'cat /proc/cpuinfo' to ensure legitimate cores are being used in test after disabling hyperthreading'
 
 Disable frequency scaling
 set cpu freq on CPU 2

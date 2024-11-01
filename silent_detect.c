@@ -17,8 +17,8 @@
 #define NUM_CASES 1000
 // Set below variables to make sure thread are on shielded cores
 // Note: check these cores are actually legitimate after disabling hyperthreading
-#define MAIN_SHIELDED_CORE 0
-#define OTHER_SHIELDED_CORE 1
+#define MAIN_SHIELDED_CORE 2
+#define OTHER_SHIELDED_CORE 3
 
 uint16_t *tmp;
 
@@ -71,32 +71,30 @@ int configure_threads() {
     pthread_t tid;
     int ret = pthread_attr_init(&attr);
     if (ret) {
-        printf("Error with setting default attributes of new thread\n");
+        printf("Error with setting default attributes of new thread: %d\n", ret);
         return 1;
     }
     cpu_set_t cpu_set;
-    int thread_cpu = OTHER_SHIELDED_CORE;
     CPU_ZERO(&cpu_set);
-    CPU_SET(thread_cpu, &cpu_set);
+    CPU_SET(OTHER_SHIELDED_CORE, &cpu_set);
     // Set affinity other thread to diff. shielded core
     ret = pthread_attr_setaffinity_np(&attr, sizeof(cpu_set), &cpu_set);
     if (ret) {
-        printf("Error with setting affinity in thread attribute\n");
+        printf("Error with setting affinity in thread attribute: %d\n", ret);
         return 1;
     }
     ret = pthread_create(&tid, &attr, read_var, NULL);
     if (ret) {
-        printf("Error creating additional thread\n");
+        printf("Error creating additional thread: %d\n", ret);
         return 1;
     }
 
     // Create structure for CPUs on system, zero them out then add one of them to the set for the main thread
-    int cpu_desired = MAIN_SHIELDED_CORE;
     CPU_ZERO(&cpu_set);
-    CPU_SET(cpu_desired, &cpu_set);
+    CPU_SET(MAIN_SHIELDED_CORE, &cpu_set);
     ret = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set), &cpu_set);
     if (ret) {
-        printf("Error setting affinity of main thread\n");
+        printf("Error setting affinity of main thread: %d\n", ret);
         return 1;
     }
 }
@@ -113,8 +111,8 @@ int main() {
     }
 
     // Run test with thread in background continuously reading, one for writing same value to one location and another for writing diff. values
-    printf("Writing different values cycles taken: %lld\n", run_experiment(100, 1000, 1));
-    printf("Writing same value cycles taken: %lld\n", run_experiment(100, 1000, 0));
+    printf("Writing different values cycles taken: %lld\n", run_experiment(WARMUP_PERIOD, NUM_CASES, 1));
+    printf("Writing same value cycles taken: %lld\n", run_experiment(WARMUP_PERIOD, NUM_CASES, 0));
 
     free(tmp);
     return 0;
