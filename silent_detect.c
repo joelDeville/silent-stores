@@ -20,7 +20,12 @@
 #define MAIN_SHIELDED_CORE 2
 #define OTHER_SHIELDED_CORE 3
 
+// Variable in heap being written to
 uint16_t *tmp;
+// global int for xor-ing with val to write to heap
+// Say x is value written to heap, set xor_val to ~x to keep value the same
+// Set to anything else to alternate values written to heap
+int xor_val = ~4;
 
 // Thread function to continuously read variable
 void * read_var(void *p) {
@@ -39,30 +44,21 @@ unsigned long long rdtsc() {
     return a | (b << 32);
 }
 
-unsigned long long run_test(int write_diff_value) {
-    unsigned long long start = rdtsc();
-    static int val_to_write = 4;
-    *tmp = val_to_write;
-    if (write_diff_value) {
-        val_to_write++;
-    }
-    return rdtsc() - start;
-}
-
 // Runs test for given warmup period and cases
 unsigned long long run_experiment(unsigned int warm_up, unsigned int cases, int write_diff_value) {
     // Starting warm-up phase for benchmark
+    int val_to_write = 4;
     for (int i = 0; i < warm_up; i++) {
-        run_test(write_diff_value);
+        *tmp = val_to_write;
     }
 
     // Now warmed up, do actual test
-    unsigned long long cycles = 0;
+    unsigned long long start = rdtsc();
     for (int i = 0; i < cases; i++) {
-        cycles += run_test(write_diff_value);
+        *tmp = val_to_write;
     }
 
-    return cycles / cases;
+    return (rdtsc() - start) / cases;
 }
 
 int configure_threads() {
