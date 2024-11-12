@@ -23,9 +23,9 @@
 // Variable in heap being written to
 uint16_t *tmp;
 // global int for xor-ing with val to write to heap
-// Say x is value written to heap, set xor_val to ~x to keep value the same
+// Say x is value written to heap, set xor_val to 0 to keep value the same
 // Set to anything else to alternate values written to heap
-int xor_val = ~4;
+int asm_val = 0;
 
 // Thread function to continuously read variable
 void * read_var(void *p) {
@@ -45,17 +45,45 @@ unsigned long long rdtsc() {
 }
 
 // Runs test for given warmup period and cases
-unsigned long long run_experiment(unsigned int warm_up, unsigned int cases, int write_diff_value) {
+unsigned long long run_experiment_xor(unsigned int warm_up, unsigned int cases, int write_diff_value) {
     // Starting warm-up phase for benchmark
     int val_to_write = 4;
     for (int i = 0; i < warm_up; i++) {
         *tmp = val_to_write;
+        asm volatile("xor %[in], %[out]"
+                    : [out] "+r" (val_to_write) //+ means reading and writing variable
+                    : [in] "r" (asm_val)); // r means use this value in register
     }
 
     // Now warmed up, do actual test
     unsigned long long start = rdtsc();
     for (int i = 0; i < cases; i++) {
         *tmp = val_to_write;
+        asm volatile("xor %[in], %[out]"
+                    : [out] "+r" (val_to_write)
+                    : [in] "r" (asm_val));
+    }
+
+    return (rdtsc() - start) / cases;
+}
+
+unsigned long long run_experiment_rotate(unsigned int warm_up, unsigned int cases, int write_diff_value) {
+    // Starting warm-up phase for benchmark
+    int val_to_write = 4;
+    for (int i = 0; i < warm_up; i++) {
+        *tmp = val_to_write;
+        asm volatile("rol %[in], %[out]"
+                    : [out] "+r" (val_to_write)
+                    : [in] "cI" (asm_val)); // c means using CL register and I means 6/8 bit shifting constant likely for shifting
+    }
+
+    // Now warmed up, do actual test
+    unsigned long long start = rdtsc();
+    for (int i = 0; i < cases; i++) {
+        *tmp = val_to_write;
+        asm volatile("rol %[in], %[out]"
+                    : [out] "+r" (val_to_write)
+                    : [in] "cI" (asm_val));
     }
 
     return (rdtsc() - start) / cases;
@@ -107,8 +135,14 @@ int main() {
     }
 
     // Run test with thread in background continuously reading, one for writing same value to one location and another for writing diff. values
-    printf("Writing different values cycles taken: %lld\n", run_experiment(WARMUP_PERIOD, NUM_CASES, 1));
-    printf("Writing same value cycles taken: %lld\n", run_experiment(WARMUP_PERIOD, NUM_CASES, 0));
+    asm_val = 3;
+    printf("Writing diff. vals xor, ycles taken: %lld\n", run_experiment_xor(WARMUP_PERIOD, NUM_CASES, 1));
+    asm_val = 0;
+    printf("Writing same val xor, cycles taken: %lld\n", run_experiment_xor(WARMUP_PERIOD, NUM_CASES, 0));
+    asm_val = 1;
+    printf("Writing diff. vals rotate, cycles taken: %lld\n", run_experiment_rotate(WARMUP_PERIOD, NUM_CASES, 1));
+    asm_val = 0;
+    printf("Writing same val rotate, cycles taken: %lld\n", run_experiment_rotate(WARMUP_PERIOD, NUM_CASES, 0));
 
     free(tmp);
     return 0;
