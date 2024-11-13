@@ -7,7 +7,7 @@
 #include <sched.h>
 
 // This test is the updated test to determine if the silent store optimization exists on whichever machine it runs on
-// Idea is: if hyperthread takes longer, this will be on a non-silent store machine due to cache states
+// Idea is: if main thread writing one value continuously and thread continuously reading takes longer than writing different values, then silent stores exist
 // Keep in mind store elision, where compiler can optimize out earlier stores to the same location and only take last store
 // This can be determined by writing one single value to location multiple times instead of different values, not necessarily focus of this test though
 
@@ -20,9 +20,21 @@
 #define MAIN_SHIELDED_CORE 2
 #define OTHER_SHIELDED_CORE 3
 
+// Checking and creating different syntax for instructions based on architecture
+#if defined(__arm__ )
+    #define GET_TIME() // Figure this out
+    #define XOR_VALUE(a, b) asm volatile("eor %[out], %[out], %[in]" : [out] "+r" (*a) : [in] "r" (*b));
+    #define ROTATE_VALUE(a, b) asm volatile("ror %[out], %[out], %[in]" : [out] "+r" (*a) : [in] "r" (32 - *b)); // 32 if using 32-bit register, 64 for 64-bit
+#elif defined(__x86_64)
+    #define GET_TIME(a, b) asm volatile("rdtsc" : "=a"(*a), "=d"(*b));
+    #define XOR_VALUE(a, b) asm volatile("xor %[in], %[out]" : [out] "+r" (*a) : [in] "r" (*b));
+    #define ROTATE_VALUE(a, b) asm volatile("rol %[in], %[out]" : [out] "+r" (*a) : [in] "cI" (*b));
+#endif
+// Note: r means putting variable into register, + means reading/writing and cI means immediate or using CL register for shift amount
+
 // Variable in heap being written to
 uint16_t *tmp;
-// global int for xor-ing with val to write to heap
+// global int for xor-ing/rotating with val to write to heap
 // Say x is value written to heap, set xor_val to 0 to keep value the same
 // Set to anything else to alternate values written to heap
 int asm_val = 0;
@@ -38,9 +50,7 @@ void * read_var(void *p) {
 // Finds value of RDTSC command on x86
 unsigned long long rdtsc() {
     unsigned long long a, b;
-    asm volatile("rdtsc\n\t"
-                : "=a"(a), "=d"(b));
-    
+    GET_TIME(&a, &b);
     return a | (b << 32);
 }
 
@@ -50,18 +60,14 @@ unsigned long long run_experiment_xor(unsigned int warm_up, unsigned int cases, 
     int val_to_write = 4;
     for (int i = 0; i < warm_up; i++) {
         *tmp = val_to_write;
-        asm volatile("xor %[in], %[out]"
-                    : [out] "+r" (val_to_write) //+ means reading and writing variable
-                    : [in] "r" (asm_val)); // r means use this value in register
+        XOR_VALUE(&val_to_write, &asm_val);
     }
 
     // Now warmed up, do actual test
     unsigned long long start = rdtsc();
     for (int i = 0; i < cases; i++) {
         *tmp = val_to_write;
-        asm volatile("xor %[in], %[out]"
-                    : [out] "+r" (val_to_write)
-                    : [in] "r" (asm_val));
+        XOR_VALUE(&val_to_write, &asm_val);
     }
 
     return (rdtsc() - start) / cases;
@@ -72,18 +78,14 @@ unsigned long long run_experiment_rotate(unsigned int warm_up, unsigned int case
     int val_to_write = 4;
     for (int i = 0; i < warm_up; i++) {
         *tmp = val_to_write;
-        asm volatile("rol %[in], %[out]"
-                    : [out] "+r" (val_to_write)
-                    : [in] "cI" (asm_val)); // c means using CL register and I means 6/8 bit shifting constant likely for shifting
+        ROTATE_VALUE(&val_to_write, &asm_val);
     }
 
     // Now warmed up, do actual test
     unsigned long long start = rdtsc();
     for (int i = 0; i < cases; i++) {
         *tmp = val_to_write;
-        asm volatile("rol %[in], %[out]"
-                    : [out] "+r" (val_to_write)
-                    : [in] "cI" (asm_val));
+        ROTATE_VALUE(&val_to_write, &asm_val);
     }
 
     return (rdtsc() - start) / cases;
