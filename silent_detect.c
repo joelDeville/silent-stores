@@ -21,11 +21,13 @@
 #define OTHER_SHIELDED_CORE 3
 
 // Checking and creating different syntax for instructions based on architecture
-#if defined(__arm__ )
-    #define GET_TIME() // Figure this out
+#if defined(__arm__ ) || defined(__aarch64__)
+    #define X86 0
+    #define GET_TIME(a)  asm volatile("mrs %0, cntvct_el0" : "=r" (*a));
     #define XOR_VALUE(a, b) asm volatile("eor %[out], %[out], %[in]" : [out] "+r" (*a) : [in] "r" (*b));
     #define ROTATE_VALUE(a, b) asm volatile("ror %[out], %[out], %[in]" : [out] "+r" (*a) : [in] "r" (32 - *b)); // 32 if using 32-bit register, 64 for 64-bit
 #elif defined(__x86_64)
+    #define X86 1
     #define GET_TIME(a, b) asm volatile("rdtsc" : "=a"(*a), "=d"(*b));
     #define XOR_VALUE(a, b) asm volatile("xor %[in], %[out]" : [out] "+r" (*a) : [in] "r" (*b));
     #define ROTATE_VALUE(a, b) asm volatile("rol %[in], %[out]" : [out] "+r" (*a) : [in] "cI" (*b));
@@ -50,12 +52,19 @@ void * read_var(void *p) {
 // Finds value of RDTSC command on x86
 unsigned long long rdtsc() {
     unsigned long long a, b;
-    GET_TIME(&a, &b);
-    return a | (b << 32);
+    unsigned long long result;
+    if (X86) {
+        //GET_TIME(&a, &b);
+        result = a | (b << 32);
+    } else {
+        GET_TIME(&a);
+        result = a;
+    }
+    return result;
 }
 
 // Runs test for given warmup period and cases
-unsigned long long run_experiment_xor(unsigned int warm_up, unsigned int cases, int write_diff_value) {
+double run_experiment_xor(unsigned int warm_up, unsigned int cases, int write_diff_value) {
     // Starting warm-up phase for benchmark
     int val_to_write = 4;
     for (int i = 0; i < warm_up; i++) {
@@ -70,10 +79,11 @@ unsigned long long run_experiment_xor(unsigned int warm_up, unsigned int cases, 
         XOR_VALUE(&val_to_write, &asm_val);
     }
 
-    return (rdtsc() - start) / cases;
+    printf("%lld %lld\n", start, rdtsc());
+    return (double) (rdtsc() - start) / cases;
 }
 
-unsigned long long run_experiment_rotate(unsigned int warm_up, unsigned int cases, int write_diff_value) {
+double run_experiment_rotate(unsigned int warm_up, unsigned int cases, int write_diff_value) {
     // Starting warm-up phase for benchmark
     int val_to_write = 4;
     for (int i = 0; i < warm_up; i++) {
@@ -88,7 +98,7 @@ unsigned long long run_experiment_rotate(unsigned int warm_up, unsigned int case
         ROTATE_VALUE(&val_to_write, &asm_val);
     }
 
-    return (rdtsc() - start) / cases;
+    return (double)  (rdtsc() - start) / cases;
 }
 
 int configure_threads() {
@@ -100,33 +110,35 @@ int configure_threads() {
         printf("Error with setting default attributes of new thread: %d\n", ret);
         return 1;
     }
-    cpu_set_t cpu_set;
-    CPU_ZERO(&cpu_set);
-    CPU_SET(OTHER_SHIELDED_CORE, &cpu_set);
-    // Set affinity other thread to diff. shielded core
-    ret = pthread_attr_setaffinity_np(&attr, sizeof(cpu_set), &cpu_set);
-    if (ret) {
-        printf("Error with setting affinity in thread attribute: %d\n", ret);
-        return 1;
-    }
+    // cpu_set_t cpu_set;
+    // CPU_ZERO(&cpu_set);
+    // CPU_SET(OTHER_SHIELDED_CORE, &cpu_set);
+    // // Set affinity other thread to diff. shielded core
+    // ret = pthread_attr_setaffinity_np(&attr, sizeof(cpu_set), &cpu_set);
+    // if (ret) {
+    //     printf("Error with setting affinity in thread attribute: %d\n", ret);
+    //     return 1;
+    // }
     ret = pthread_create(&tid, &attr, read_var, NULL);
     if (ret) {
         printf("Error creating additional thread: %d\n", ret);
         return 1;
     }
 
-    // Create structure for CPUs on system, zero them out then add one of them to the set for the main thread
-    CPU_ZERO(&cpu_set);
-    CPU_SET(MAIN_SHIELDED_CORE, &cpu_set);
-    ret = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set), &cpu_set);
-    if (ret) {
-        printf("Error setting affinity of main thread: %d\n", ret);
-        return 1;
-    }
+    // // Create structure for CPUs on system, zero them out then add one of them to the set for the main thread
+    // CPU_ZERO(&cpu_set);
+    // CPU_SET(MAIN_SHIELDED_CORE, &cpu_set);
+    // ret = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set), &cpu_set);
+    // if (ret) {
+    //     printf("Error setting affinity of main thread: %d\n", ret);
+    //     return 1;
+    // }
+    return 0;
 }
 
 int main() {
     // Allocate variable in heap and configure main/additional thread
+    printf("Starting!\n");
     tmp = malloc(sizeof(uint16_t));
     if (tmp == NULL) {
         printf("Unable to allocate heap memory\n");
@@ -138,14 +150,14 @@ int main() {
 
     // Run test with thread in background continuously reading, one for writing same value to one location and another for writing diff. values
     asm_val = 3;
-    printf("Writing diff. vals xor, ycles taken: %lld\n", run_experiment_xor(WARMUP_PERIOD, NUM_CASES, 1));
+    printf("Writing diff. vals xor, ycles taken: %.2f\n", run_experiment_xor(WARMUP_PERIOD, NUM_CASES, 1));
     asm_val = 0;
-    printf("Writing same val xor, cycles taken: %lld\n", run_experiment_xor(WARMUP_PERIOD, NUM_CASES, 0));
+    printf("Writing same val xor, cycles taken: %.2f\n", run_experiment_xor(WARMUP_PERIOD, NUM_CASES, 0));
     asm_val = 1;
-    printf("Writing diff. vals rotate, cycles taken: %lld\n", run_experiment_rotate(WARMUP_PERIOD, NUM_CASES, 1));
+    printf("Writing diff. vals rotate, cycles taken: %.2f\n", run_experiment_rotate(WARMUP_PERIOD, NUM_CASES, 1));
     asm_val = 0;
-    printf("Writing same val rotate, cycles taken: %lld\n", run_experiment_rotate(WARMUP_PERIOD, NUM_CASES, 0));
-
+    printf("Writing same val rotate, cycles taken: %.2f\n", run_experiment_rotate(WARMUP_PERIOD, NUM_CASES, 0));
+    printf("DOne\n");
     free(tmp);
     return 0;
 }
