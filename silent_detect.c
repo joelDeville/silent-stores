@@ -13,8 +13,8 @@
 
 // Force read defined to have compiler not optimize out unused read
 #define FORCE_READ_INT(var) __asm__("" ::"r"(var))
-#define WARMUP_PERIOD 100
-#define NUM_CASES 1000
+#define WARMUP_PERIOD 10000
+#define NUM_CASES 100000
 // Set below variables to make sure thread are on shielded cores
 // Note: check these cores are actually legitimate after disabling hyperthreading
 #define MAIN_SHIELDED_CORE 2
@@ -64,7 +64,7 @@ unsigned long long rdtsc() {
 }
 
 // Runs test for given warmup period and cases
-double run_experiment_xor(unsigned int warm_up, unsigned int cases, int write_diff_value) {
+unsigned long long run_experiment_xor(unsigned int warm_up, unsigned int cases, int write_diff_value) {
     // Starting warm-up phase for benchmark
     int val_to_write = 4;
     for (int i = 0; i < warm_up; i++) {
@@ -78,12 +78,10 @@ double run_experiment_xor(unsigned int warm_up, unsigned int cases, int write_di
         *tmp = val_to_write;
         XOR_VALUE(&val_to_write, &asm_val);
     }
-
-    printf("%lld %lld\n", start, rdtsc());
-    return (double) (rdtsc() - start) / cases;
+    return rdtsc() - start;
 }
 
-double run_experiment_rotate(unsigned int warm_up, unsigned int cases, int write_diff_value) {
+unsigned long long run_experiment_rotate(unsigned int warm_up, unsigned int cases, int write_diff_value) {
     // Starting warm-up phase for benchmark
     int val_to_write = 4;
     for (int i = 0; i < warm_up; i++) {
@@ -110,29 +108,29 @@ int configure_threads() {
         printf("Error with setting default attributes of new thread: %d\n", ret);
         return 1;
     }
-    // cpu_set_t cpu_set;
-    // CPU_ZERO(&cpu_set);
-    // CPU_SET(OTHER_SHIELDED_CORE, &cpu_set);
-    // // Set affinity other thread to diff. shielded core
-    // ret = pthread_attr_setaffinity_np(&attr, sizeof(cpu_set), &cpu_set);
-    // if (ret) {
-    //     printf("Error with setting affinity in thread attribute: %d\n", ret);
-    //     return 1;
-    // }
+    cpu_set_t cpu_set;
+    CPU_ZERO(&cpu_set);
+    CPU_SET(OTHER_SHIELDED_CORE, &cpu_set);
+    // Set affinity other thread to diff. shielded core
+    ret = pthread_attr_setaffinity_np(&attr, sizeof(cpu_set), &cpu_set);
+    if (ret) {
+        printf("Error with setting affinity in thread attribute: %d\n", ret);
+        return 1;
+    }
     ret = pthread_create(&tid, &attr, read_var, NULL);
     if (ret) {
         printf("Error creating additional thread: %d\n", ret);
         return 1;
     }
 
-    // // Create structure for CPUs on system, zero them out then add one of them to the set for the main thread
-    // CPU_ZERO(&cpu_set);
-    // CPU_SET(MAIN_SHIELDED_CORE, &cpu_set);
-    // ret = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set), &cpu_set);
-    // if (ret) {
-    //     printf("Error setting affinity of main thread: %d\n", ret);
-    //     return 1;
-    // }
+    // Create structure for CPUs on system, zero them out then add one of them to the set for the main thread
+    CPU_ZERO(&cpu_set);
+    CPU_SET(MAIN_SHIELDED_CORE, &cpu_set);
+    ret = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set), &cpu_set);
+    if (ret) {
+        printf("Error setting affinity of main thread: %d\n", ret);
+        return 1;
+    }
     return 0;
 }
 
@@ -150,13 +148,13 @@ int main() {
 
     // Run test with thread in background continuously reading, one for writing same value to one location and another for writing diff. values
     asm_val = 3;
-    printf("Writing diff. vals xor, ycles taken: %.2f\n", run_experiment_xor(WARMUP_PERIOD, NUM_CASES, 1));
+    printf("Writing diff. vals xor, ycles taken: %lld\n", run_experiment_xor(WARMUP_PERIOD, NUM_CASES, 1));
     asm_val = 0;
-    printf("Writing same val xor, cycles taken: %.2f\n", run_experiment_xor(WARMUP_PERIOD, NUM_CASES, 0));
+    printf("Writing same val xor, cycles taken: %lld\n", run_experiment_xor(WARMUP_PERIOD, NUM_CASES, 0));
     asm_val = 1;
-    printf("Writing diff. vals rotate, cycles taken: %.2f\n", run_experiment_rotate(WARMUP_PERIOD, NUM_CASES, 1));
+    printf("Writing diff. vals rotate, cycles taken: %lld\n", run_experiment_rotate(WARMUP_PERIOD, NUM_CASES, 1));
     asm_val = 0;
-    printf("Writing same val rotate, cycles taken: %.2f\n", run_experiment_rotate(WARMUP_PERIOD, NUM_CASES, 0));
+    printf("Writing same val rotate, cycles taken: %lld\n", run_experiment_rotate(WARMUP_PERIOD, NUM_CASES, 0));
     printf("DOne\n");
     free(tmp);
     return 0;
