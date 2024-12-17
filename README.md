@@ -39,6 +39,3 @@ Never print within a test as it uses many subsystems. Instead, place something i
 - For instance, using int[] to add elements into and analyze elements after test has finished
 
 For maximum information gathering, run this test on as many machines as possible (Intel, Arm, M1, etc)
-
-TODO: next steps: cache line flushes potentially during test
-flush store buffers (somehow) so cache coherency kicks in to affect timing differences

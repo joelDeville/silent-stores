@@ -1,0 +1,2 @@
+Writing diff. vals xor, ycles taken: 427544
+Writing same val xor, cycles taken: 432056
