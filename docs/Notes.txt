@@ -6,3 +6,10 @@ Use sizeof macro to determine size of point to know what to subtract by to emula
 
 In general, try to do instruction-based checking of cycle registers (if possible) to incur system call
 
+Make sure to check if machine allows for hyperthreading and to try to locate hyperthreaded cores
+- likely they will be sibling cores
+- join threads to those cores
+In general, remember cache states to notice effects on timing differences (exclusivity & shared states)
+Use atomic variable types to ensure reading/writing is atomic always in a test
+Never print within a test as it uses many subsystems. Instead, place something into memory and check it after test has ran.
+- For instance, using int[] to add elements into and analyze elements after test has finished
