@@ -1,2 +1,5 @@
-Writing diff. vals xor, ycles taken: 427544
-Writing same val xor, cycles taken: 432056
+Main thread isolated on core 2
+Reading thread isolated on core 3
+Writing diff. vals xor, cycles taken: 168535
+Writing same val xor, cycles taken: 168498
+

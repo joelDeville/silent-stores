@@ -15,7 +15,7 @@
 #define FORCE_READ_INT(var) __asm__("" ::"r"(var))
 #define WARMUP_PERIOD 10000
 #define NUM_CASES 100000
-// Set below variables to make sure thread are on shielded cores
+// Set below variables to make sure threads are on shielded cores
 // Note: check these cores are actually legitimate after disabling hyperthreading
 #define MAIN_SHIELDED_CORE 2
 #define OTHER_SHIELDED_CORE 3
@@ -23,14 +23,13 @@
 // Checking and creating different syntax for instructions based on architecture
 #if defined(__arm__ ) || defined(__aarch64__)
     #define X86 0
-    // TODO: note this virtual time register may not be the fastest, look into doing a command to determine the time/cycles
     #define GET_TIME(a, b)  asm volatile("mrs %0, cntvct_el0" : "=r" (*a));
     #define XOR_VALUE(a, b) asm volatile("eor %[out], %[out], %[in]" : [out] "+r" (*a) : [in] "r" (*b));
 #elif defined(__x86_64)
     #define X86 1
     #define GET_TIME(a, b) asm volatile("rdtsc" : "=a"(*a), "=d"(*b));
     #define XOR_VALUE(a, b) asm volatile("xor %[in], %[out]" : [out] "+r" (*a) : [in] "r" (*b));
-    // TODO: Look into increment/decrement assembly instructions in addition to doing xor
+    #define INC_VALUE(a) asm volatile("inc %[inout]" : [inout] "+r" (*a));
 // #elif defined(ANDROID) TODO: find Android API to create assembly calls for it
 #endif
 // Note: r means putting variable into register, + means reading/writing and cI means immediate or using CL register for shift amount
@@ -65,7 +64,7 @@ unsigned long long rdtsc() {
 }
 
 // Runs test for given warmup period and cases
-unsigned long long run_experiment_xor(unsigned int warm_up, unsigned int cases, int write_diff_value) {
+unsigned long long run_experiment(unsigned int warm_up, unsigned int cases, int write_diff_value) {
     // Starting warm-up phase for benchmark
     int val_to_write = 4;
     for (int i = 0; i < warm_up; i++) {
@@ -119,9 +118,11 @@ int configure_threads() {
 
 int main() {
     // Initialize log for writing data from run
-    // TODO: add more information into log (such as cores isolated on for each whatnot)
     char *file_name = (X86) ? "logs/X86.txt" : "logs/ARM.txt";
-    FILE* file = fopen(file_name, "w");
+    FILE* file = fopen(file_name, "a");
+    fprintf(file, "Main thread isolated on core %d\n", MAIN_SHIELDED_CORE);
+    fprintf(file, "Reading thread isolated on core %d\n", OTHER_SHIELDED_CORE);
+
     // Allocate variable in heap and configure main/additional thread
     tmp = malloc(sizeof(uint16_t));
     if (tmp == NULL) {
@@ -129,14 +130,15 @@ int main() {
         return 1;
     }
     if (configure_threads()) {
+        printf("Error configuring threads\n");
         return 1;
     }
 
     // Run test with thread in background continuously reading, one for writing same value to one location and another for writing diff. values
     asm_val = 3;
-    fprintf(file, "Writing diff. vals xor, ycles taken: %lld\n", run_experiment_xor(WARMUP_PERIOD, NUM_CASES, 1));
+    fprintf(file, "Writing diff. vals xor, cycles taken: %lld\n", run_experiment(WARMUP_PERIOD, NUM_CASES, 1));
     asm_val = 0;
-    fprintf(file,"Writing same val xor, cycles taken: %lld\n", run_experiment_xor(WARMUP_PERIOD, NUM_CASES, 0));
+    fprintf(file, "Writing same val xor, cycles taken: %lld\n\n", run_experiment(WARMUP_PERIOD, NUM_CASES, 0));
     printf("Done\n");
     free(tmp);
     fclose(file);

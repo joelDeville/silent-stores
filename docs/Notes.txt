@@ -13,3 +13,8 @@ In general, remember cache states to notice effects on timing differences (exclu
 Use atomic variable types to ensure reading/writing is atomic always in a test
 Never print within a test as it uses many subsystems. Instead, place something into memory and check it after test has ran.
 - For instance, using int[] to add elements into and analyze elements after test has finished
+
+Best to do instruction-based checking of CPU cycles as that incurs a system call
+
+Volatile keyword on extended ASM creates implied fences, not allowing inner instructions to be moved outside of structure
+

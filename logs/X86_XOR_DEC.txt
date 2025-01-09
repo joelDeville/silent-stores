@@ -1,0 +1,7 @@
+Main thread isolated on core 2
+Reading thread isolated on core 3
+Writing diff. vals xor, cycles taken: 165464
+Writing diff. vals inc dec, cycles taken: 165316
+Writing same val xor, cycles taken: 165538
+Writing same val inc dec, cycles taken: 165316
+
