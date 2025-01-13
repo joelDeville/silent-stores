@@ -23,7 +23,7 @@
 // Checking and creating different syntax for instructions based on architecture
 #if defined(__arm__ ) || defined(__aarch64__)
     #define X86 0
-    #define GET_TIME(a, b)  asm volatile("mrs %0, cntvct_el0" : "=r" (*a));
+    #define GET_TIME(a)  asm volatile("mrs %0, cntvct_el0" : "=r" (*a));
     #define XOR_VALUE(a, b) asm volatile("eor %[out], %[out], %[in]" : [out] "+r" (*a) : [in] "r" (*b));
 #elif defined(__x86_64)
     #define X86 1
@@ -49,17 +49,17 @@ void * read_var(void *p) {
     }
 }
 
-// Finds value of RDTSC command on x86
+// Finds current CPU cycles
 unsigned long long rdtsc() {
     unsigned long long a, b;
     unsigned long long result;
-    if (X86) {
+    #ifdef X86
         GET_TIME(&a, &b);
         result = a | (b << 32);
-    } else {
-        GET_TIME(&a, &b);
+    #else
+        GET_TIME(&a);
         result = a;
-    }
+    #endif
     return result;
 }
 
@@ -108,6 +108,7 @@ int configure_threads() {
     // Create structure for CPUs on system, zero them out then add one of them to the set for the main thread
     CPU_ZERO(&cpu_set);
     CPU_SET(MAIN_SHIELDED_CORE, &cpu_set);
+    // USE pthread_set_qos_class_self_np for setting CPU
     ret = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set), &cpu_set);
     if (ret) {
         printf("Error setting affinity of main thread: %d\n", ret);
