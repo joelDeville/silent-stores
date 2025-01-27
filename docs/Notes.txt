@@ -5,6 +5,7 @@ Use sizeof macro to determine size of point to know what to subtract by to emula
 - Due to ARM only implementing rotate left, so rotate right is really ROL word_ize - shift_amt
 
 In general, try to do instruction-based checking of cycle registers (if possible) to incur system call
+- might have to look further into best way to find cycle count on ARM (currently accessing virtual register I believe)
 
 Make sure to check if machine allows for hyperthreading and to try to locate hyperthreaded cores
 - likely they will be sibling cores
@@ -18,3 +19,10 @@ Best to do instruction-based checking of CPU cycles as that incurs a system call
 
 Volatile keyword on extended ASM creates implied fences, not allowing inner instructions to be moved outside of structure
 
+Simulator notes:
+- Appears FireSim does support both multicore and multithreading configurations, so would be good to test on this platform
+- Gem5
+- Champsim
+- Sniper
+
+ChatGPT could be good resource solely for compiling microarchitecture simulators to investigate for multicore support to test benchmark on
