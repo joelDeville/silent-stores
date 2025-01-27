@@ -1,0 +1,13 @@
+Main thread isolated on core 2
+Reading thread isolated on core 3
+Writing diff. vals xor, cycles taken: 2143
+Writing same val xor, cycles taken: 2824
+
+Main thread isolated on core 2
+Reading thread isolated on core 3
+Writing diff. vals xor, cycles taken: 3706
+Writing same val xor, cycles taken: 4939
+
+Main thread running QoS class utilityReading thread running QoS class backgroundWriting diff. vals xor, cycles taken: 2707
+Writing same val xor, cycles taken: 2703
+

@@ -1,3 +1,5 @@
+Note: Gem5 is meant for multithreading support, does not support multicore simulations
+
 To set up gem5 simulator:
     1. go to gem5 website (and make sure to clone pandora repo)
     2. run relevant instruction according to OS

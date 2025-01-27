@@ -19,6 +19,8 @@ Best to do instruction-based checking of CPU cycles as that incurs a system call
 
 Volatile keyword on extended ASM creates implied fences, not allowing inner instructions to be moved outside of structure
 
+Apple QoS classes are used to specify importance of task to dedicate running time/resources
+
 Simulator notes:
 - Appears FireSim does support both multicore and multithreading configurations, so would be good to test on this platform
 - Gem5
