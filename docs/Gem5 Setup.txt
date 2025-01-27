@@ -1,8 +1,8 @@
-Note: Gem5 is meant for multithreading support, does not support multicore simulations
+Note: Gem5 is meant for multithreading support, but does seem to support multicore simulations (maybe not though)
 
 To set up gem5 simulator:
     1. go to gem5 website (and make sure to clone pandora repo)
-    2. run relevant instruction according to OS
+    2. run relevant instruction according to Ubuntu version
     3. follow instructions (such as scons) to build then subsequently run gem5 build
     4. make sure to use 'sudo' when building gem5
     5. download and run 'configure' on libsodium (stable release)
