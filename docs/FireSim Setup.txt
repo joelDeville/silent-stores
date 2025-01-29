@@ -1,0 +1,13 @@
+Note: if running into error with not finding libtinfo.so file for Vivado lab, run 'sudo apt install libtinfo5'
+Make sure Ubuntu 20.04 is in use
+
+To set up FireSim:
+    1. Download Vivado Lab
+        1a. Create desktop .sh file with following content to allow shortcut-like behavior:
+            #!/bin/bash
+            source /tools/Xilinx/Vivado_Lab/2024.2/settings64.sh
+            vivado_lab -journal ../Documents/Vivado-Lab/vivado_lab.jou -log ../Documents/Vivado-Lab/vivado_lab.log
+    2. Follow FireSim directions to initialize and download drivers (specifically cable drivers) for NiteFury
+    	2a. Run 'install drivers' script in Vivado Lab installation directory to install correct drivers
+    	- look in ${vivado_install_dir}/data/xicom/cable_drivers/lin64/install_script/install_drivers/
+    3. Follow directions to set up users in Ubuntu for FireSim management
