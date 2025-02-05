@@ -1,0 +1,12 @@
+SniperSim is another microarchitecture simulator which supports multicore and multithreading
+- useful for gathering more data for this benchmark
+
+To set up SniperSim:
+    1. Follow directions on their GitHub (links to their website to get started)
+        1a. May not have to send info to get link, just try cloning the repo straight
+    2. Download Intel's PIN software (a dynamic binary instrumentation tool)
+        2a. Move and rename folder as "pin_kit" in sniper's folder
+    3. Run 'make -j N' with N being the number of CPUs on the machine to build SniperSim
+        3a. Run command below if running into error while building saying "unrecognized command line option ‘-std=c++20’; did you mean ‘-std=c++2a’"
+        3b. sudo ln -s /usr/bin/g++-10 /usr/local/bin/g++ (creates symink between running g++ and actually going to g++-10)
+        3c. This makes sure the new configurations are actually valid in the script (only valid in g++-10 and beyond, not g++-9)
