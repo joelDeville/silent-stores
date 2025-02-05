@@ -2,12 +2,21 @@ Note: if running into error with not finding libtinfo.so file for Vivado lab, ru
 Make sure Ubuntu 20.04 is in use
 
 To set up FireSim:
-    1. Download Vivado Lab
+    1. Follow directions to set up users in Ubuntu for FireSim management
+        3a. Go to 'Local FPGA System Setup' and follow the all instructions (sudo and non-sudo setup)
+        3b. This can be done on the latest version of FireSim
+        3c. This also goes through installing Vivado lab and cable drivers, step two could be omitted (except for shortcut convenience) unless errors occur
+        3d. Make sure to rerun SSH instructions (in non-sudo) section before running FireSim
+    2. Download Vivado Lab
         1a. Create desktop .sh file with following content to allow shortcut-like behavior:
             #!/bin/bash
             source /tools/Xilinx/Vivado_Lab/2024.2/settings64.sh
             vivado_lab -journal ../Documents/Vivado-Lab/vivado_lab.jou -log ../Documents/Vivado-Lab/vivado_lab.log
-    2. Follow FireSim directions to initialize and download drivers (specifically cable drivers) for NiteFury
+    3. Follow FireSim directions to initialize and download drivers (specifically cable drivers) for NiteFury
     	2a. Run 'install drivers' script in Vivado Lab installation directory to install correct drivers
     	- look in ${vivado_install_dir}/data/xicom/cable_drivers/lin64/install_script/install_drivers/
-    3. Follow directions to set up users in Ubuntu for FireSim management
+        - Keep JTAG cable plugged in at all times as this is used by FireSim
+        - make sure to ALWAYS source 'sourceme-manager.sh' as described on the website when using Firesim in Chipyard
+    4. Follow specific FPGA Chipyard instructions to install Firesim with Chipyard and initialize it
+        4a. Temporary simulation directory will be created
+        4b. Also must log IP of manager machine (same as run machine in my case) and FPGA machine_spec (detailed in Firesim tutorial)

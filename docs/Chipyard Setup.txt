@@ -1,3 +1,5 @@
+Note: May want to follow FireSim tutorial for Chipyard instead of this one unless solely wanting to use software simulation instead of FPGA
+
 To set up Chipyard (for BOOM and Rocket):
     1. install conda
     2. go to chipyard website and follow instructions
@@ -9,8 +11,13 @@ To set up Chipyard (for BOOM and Rocket):
         3b. in chipyard directory, run 'sudo chown <username> -R .' to move all ownership from root to your user (useful to build-setup.sh)
     3. install libmamba (using conda)
     4. run build command (not using sudo, with relevant skipping instructions to skip any FireMarshal configurations)
-        4a. skip marshal first time (--skip-marshal)
+        4a. skip marshal first time (--skip-marshal, unless FireSim has already been installed on system)
         4b. if rerunning, make sure .conda-env environment active in condas and run with --skip-conda too
     5. activate .conda-env environment in chipyard directory for variables
     6. after finishing build (and in general), always run 'source env.sh' before using 'make' for anything
-    7. continue instructions for running binary for BOOM/Rocket on custom tests
+    7. install verilator for building software simulations of chips
+    8. run 'make' in verilator dir to defaultly build RocketConfig
+        8a. check 'generators/chipyard/src/main/scala/config' directory for Boom/Rocket config files which define what configs are valid to pass to make
+        8b. pass desired config to 'make CONFIG=<config>' and await completion
+    9. to add own tests, add files to 'tests' directory, run 'make', then (if no errors), navigate back to sims/verilator
+        9a. use 'make run-binary BINARY=<file.riscv>' shortcut and make sure to check help if trying to not use RocketConfig executable
