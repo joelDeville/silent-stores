@@ -1,4 +1,5 @@
-Note: May want to follow FireSim tutorial for Chipyard instead of this one unless solely wanting to use software simulation instead of FPGA
+Note: May want to follow FireSim tutorial for Chipyard instead of this one unless solely wanting to use software simulation instead of FPGA 
+- (only for latest release I believe, not present in release 1.18 of FireSim)
 
 To set up Chipyard (for BOOM and Rocket):
     1. install conda

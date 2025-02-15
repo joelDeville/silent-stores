@@ -12,11 +12,13 @@ To set up FireSim:
             #!/bin/bash
             source /tools/Xilinx/Vivado_Lab/2024.2/settings64.sh
             vivado_lab -journal ../Documents/Vivado-Lab/vivado_lab.jou -log ../Documents/Vivado-Lab/vivado_lab.log
-    3. Follow FireSim directions to initialize and download drivers (specifically cable drivers) for NiteFury
+    3. Follow FireSim directions to initialize and download drivers (specifically cable drivers) for NiteFury 
+        - (make sure you are on the 1.18 branch as that is what is present in the stable chipyard release)
     	2a. Run 'install drivers' script in Vivado Lab installation directory to install correct drivers
     	- look in ${vivado_install_dir}/data/xicom/cable_drivers/lin64/install_script/install_drivers/
         - Keep JTAG cable plugged in at all times as this is used by FireSim
         - make sure to ALWAYS source 'sourceme-manager.sh' as described on the website when using Firesim in Chipyard
-    4. Follow specific FPGA Chipyard instructions to install Firesim with Chipyard and initialize it
+    4. Follow specific FPGA Chipyard instructions to install Firesim with Chipyard and initialize it 
+        - (only valid for latest firesim I believe, not release 1.18)
         4a. Temporary simulation directory will be created
         4b. Also must log IP of manager machine (same as run machine in my case) and FPGA machine_spec (detailed in Firesim tutorial)
