@@ -1,0 +1,10 @@
+ChampSim is another microarchitecture simulator which supports multicore and multithreading use cases
+- meant to provide more data for this benchmark
+
+Fun fact: ChampSim allows configuration with data prefetchers, branch predictors, and replacement policies
+
+To setup ChampSim:
+    1. Follow directions in its GitHub to install any dependencies
+    2. Define any configs desired in the example configuration file (will work with defaults otherwise)
+    3. Download any desired traces to use in simulator (since it is trace-based)
+    4. Run simulator on these traces
